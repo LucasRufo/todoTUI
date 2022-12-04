@@ -1,4 +1,5 @@
 ﻿using Spectre.Console;
+using TodoTUI;
 
 AnsiConsole.Markup("[underline red]Hello from Todo TUI. A terminal UI to keep your to do list![/]");
 AnsiConsole.WriteLine();
@@ -132,31 +133,4 @@ void AddNewTodoInTable(string description)
         new Markup($"[blue]{todo.CreatedAt}[/]"));
 
     id++;
-}
-
-enum TodoOptions
-{
-    Exit = 0,
-    List = 1,
-    Add = 2,
-    Remove = 3,
-    Update = 4
-}
-
-class Todo
-{
-    public Todo(int id, string description, int tableIndex)
-    {
-        Id = id;
-        Done = false;
-        Description = description;
-        CreatedAt = DateTime.Now.ToString("MM/dd/yyyy");
-        TableIndex = tableIndex;
-    }
-
-    public int Id { get; set; }
-    public bool Done { get; set; }
-    public string Description { get; set; } = "";
-    public string CreatedAt { get; set; } = "";
-    public int TableIndex { get; set; }
 }
