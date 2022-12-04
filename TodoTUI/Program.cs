@@ -59,7 +59,8 @@ while (true)
             AskForTodosToBeRemoved();
             break;
         case TodoOptions.Update:
-            throw new NotImplementedException();
+            AskForTodoToBeUpdated();
+            break;
         case TodoOptions.Exit:
             Environment.Exit(0);
             break;
@@ -76,6 +77,22 @@ List<Todo> AskForChoiceOfTodos(string action)
             .InstructionsText(
                 "[grey](Press [blue]<space>[/] to toggle a todo, " +
                 "[green]<enter>[/] to accept)[/]")
+            .UseConverter(todo =>
+            {
+                var done = todo.Done ? "X" : "-";
+                //string.Format("|{0,5}|{1,5}|{2,5}|{3,5}|", todo.Id, done, todo.Description, todo.CreatedAt);
+                return $"{todo.Id} {done} {todo.Description} {todo.CreatedAt}";
+            })
+            .AddChoices(todoList.ToArray()));
+}
+
+Todo AskForChoiceOfTodo(string action)
+{
+    return AnsiConsole.Prompt(
+        new SelectionPrompt<Todo>()
+            .Title($"Select the todo that you want to {action}")
+            .PageSize(10)
+            .MoreChoicesText("[grey](Move up and down to reveal more todos)[/]")
             .UseConverter(todo =>
             {
                 var done = todo.Done ? "X" : "-";
@@ -102,6 +119,21 @@ void AskForTodosToBeRemoved()
 
         todoTable.RemoveRow(todoToRemove.TableIndex);
     }
+
+    ListTable();
+}
+
+void AskForTodoToBeUpdated()
+{
+    var todoToUpdate = AskForChoiceOfTodo("update");
+
+    var newDescription = AnsiConsole.Ask<string>("What's the new description for this todo?");
+
+    var todo = todoList.Where(m => m.Id == todoToUpdate.Id).First();
+
+    todo.Description = newDescription;
+
+    todoTable.UpdateCell(todo.TableIndex, 2, new Markup($"[blue]{todo.Description}[/]"));
 
     ListTable();
 }
