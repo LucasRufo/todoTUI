@@ -1,15 +1,15 @@
 ﻿using Spectre.Console;
 using TodoTUI;
 
-AnsiConsole.Markup("[underline red]Hello from Todo TUI. A terminal UI to keep your to do list![/]");
-AnsiConsole.WriteLine();
-
 var tableHandler = new TodoTableHandler();
-
-tableHandler.ListTable();
 
 while (true)
 {
+    AnsiConsole.Markup("[bold red]Hello from [underline]Todo TUI[/]. A terminal UI to keep your to do list![/]");
+    AnsiConsole.WriteLine();
+
+    tableHandler.ListTable();
+
     TodoOptions choice = AskForAction();
 
     switch (choice)
@@ -23,10 +23,15 @@ while (true)
         case TodoOptions.Update:
             AskForTodoToBeUpdated();
             break;
+        case TodoOptions.MarkAsDone:
+            AskForTodosToBeMarkedAsDone();
+            break;
         case TodoOptions.Exit:
             Environment.Exit(0);
             break;
     }
+
+    AnsiConsole.Clear();
 }
 
 static TodoOptions AskForAction()
@@ -41,38 +46,44 @@ static TodoOptions AskForAction()
                 {
                     TodoOptions.Add => "Add new Todo to my list.",
                     TodoOptions.Update => "Update a Todo from my list.",
-                    TodoOptions.Remove => "Remove a Todo from my list.",
+                    TodoOptions.Remove => "Remove Todos from my list.",
+                    TodoOptions.MarkAsDone => "Mark Todos as done.",
                     TodoOptions.Exit => "Exit.",
                     _ => throw new InvalidOperationException(),
                 };
             })
+            .HighlightStyle(new Style(Color.Green))
             .AddChoices(new[]
             {
                 TodoOptions.Add,
                 TodoOptions.Update,
                 TodoOptions.Remove,
+                TodoOptions.MarkAsDone,
                 TodoOptions.Exit
             }));
 }
 
 void AskForNewTodo()
 {
-    var description = AnsiConsole.Ask<string>("What's your next [green]task[/]?");
+    var description = AnsiConsole.Ask<string>("What's your next [underline green]task[/]?");
 
     tableHandler.AddNewTodoInTable(description);
-
-    tableHandler.ListTable();
 }
 
 void AskForTodoToBeUpdated()
 {
     var todoToUpdate = AskForSingleTodoToAction("update");
 
-    var newDescription = AnsiConsole.Ask<string>("What's the new description for this todo?");
+    var newDescription = AnsiConsole.Ask<string>("What's the [underline green]new description[/] for this todo?");
 
     tableHandler.UpdateTodo(newDescription, todoToUpdate);
+}
 
-    tableHandler.ListTable();
+void AskForTodosToBeMarkedAsDone()
+{
+    var todosToMarkAsDone = AskForTodosToAction("mark as done");
+
+    tableHandler.MarkAsDone(todosToMarkAsDone);
 }
 
 void AskForTodosToBeRemoved()
@@ -80,21 +91,20 @@ void AskForTodosToBeRemoved()
     var todosToRemove = AskForTodosToAction("remove");
 
     tableHandler.RemoveTodo(todosToRemove);
-
-    tableHandler.ListTable();
 }
 
 List<Todo> AskForTodosToAction(string action)
 {
     return AnsiConsole.Prompt(
         new MultiSelectionPrompt<Todo>()
-            .Title($"Select the todos that you want to {action}")
+            .Title($"Select the todos that you want to {action}.")
             .PageSize(10)
             .MoreChoicesText("[grey](Move up and down to reveal more todos)[/]")
             .InstructionsText(
                 "[grey](Press [blue]<space>[/] to toggle a todo, " +
                 "[green]<enter>[/] to accept)[/]")
             .UseConverter(ChoiceConverter)
+            .HighlightStyle(new Style(Color.Red))
             .AddChoices(tableHandler!.GetTodoList().ToArray()));
 }
 
@@ -102,17 +112,18 @@ Todo AskForSingleTodoToAction(string action)
 {
     return AnsiConsole.Prompt(
         new SelectionPrompt<Todo>()
-            .Title($"Select the todo that you want to {action}")
+            .Title($"Select the todo that you want to {action}.")
             .PageSize(10)
             .MoreChoicesText("[grey](Move up and down to reveal more todos)[/]")
             .UseConverter(ChoiceConverter)
+            .HighlightStyle(new Style(Color.Red))
             .AddChoices(tableHandler!.GetTodoList().ToArray()));
 }
 
 string ChoiceConverter(Todo todo)
 {
     var maxLength = tableHandler!.GetTodoList()!.Max(m => m.Description.Length);
-    var done = todo.Done ? "X" : "-";
+    var done = todo.Done ? "[green]X[/]" : "[red]-[/]";
     var message = string.Format("{0,-2} | {1,1} | {2,-" + maxLength + "} | {3}", todo.Id, done, todo.Description, todo.CreatedAt);
     return message;
 }

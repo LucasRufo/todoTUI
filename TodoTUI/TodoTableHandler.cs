@@ -32,7 +32,7 @@ public class TodoTableHandler
 
         _todoTable?.AddRow(
             new Markup($"{todo.Id}"),
-            new Markup($"-"),
+            new Markup($"[red]-[/]"),
             new Markup($"[blue]{description}[/]"),
             new Markup($"[blue]{todo.CreatedAt}[/]"));
 
@@ -41,11 +41,10 @@ public class TodoTableHandler
 
     public void ListTable()
     {
-        AnsiConsole.Clear();
         AnsiConsole.Write(_todoTable);
     }
 
-    internal void RemoveTodo(List<Todo> todosToRemove)
+    public void RemoveTodo(List<Todo> todosToRemove)
     {
         foreach (var todoToRemove in todosToRemove)
         {
@@ -62,13 +61,25 @@ public class TodoTableHandler
         }
     }
 
-    internal void UpdateTodo(string newDescription, Todo todoToUpdate)
+    public void UpdateTodo(string newDescription, Todo todoToUpdate)
     {
         var todo = _todoList.Where(m => m.Id == todoToUpdate.Id).First();
 
         todo.Description = newDescription;
 
         _todoTable.UpdateCell(todo.TableIndex, 2, new Markup($"[blue]{todo.Description}[/]"));
+    }
+
+    public void MarkAsDone(List<Todo> todosToMarkAsDone)
+    {
+        foreach (var todoToMarkAsDone in todosToMarkAsDone)
+        {
+            var todoToUpdate = _todoList.Where(m => m.Id == todoToMarkAsDone.Id).First();
+
+            todoToUpdate.Done = true;
+
+            _todoTable.UpdateCell(todoToUpdate.TableIndex, 1, new Markup($"[green]X[/]"));
+        }
     }
 
     private void IncrementTodoId()
