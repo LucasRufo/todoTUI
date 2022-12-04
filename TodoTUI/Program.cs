@@ -4,13 +4,18 @@ AnsiConsole.Markup("[underline red]Hello from Todo TUI. A terminal UI to keep yo
 AnsiConsole.WriteLine();
 
 var id = 1;
+var todoList = new List<Todo>();
+var todoTable = new Table();
 
-var table = new Table();
+todoTable.AddColumn("Id");
+todoTable.AddColumn("Done");
+todoTable.AddColumn("Name");
+todoTable.AddColumn("Created At");
 
-table.AddColumn("Id");
-table.AddColumn("Done");
-table.AddColumn("Name");
-table.AddColumn("Created At");
+AddNewTodoInTable("teste");
+AddNewTodoInTable("teste2");
+AddNewTodoInTable("teste3");
+AddNewTodoInTable("teste4");
 
 ListTable();
 
@@ -50,12 +55,53 @@ while (true)
             AskForNewTodo();
             break;
         case TodoOptions.Remove:
-            throw new NotImplementedException();
+            AskForTodosToBeRemoved();
+            break;
         case TodoOptions.Update:
             throw new NotImplementedException();
         case TodoOptions.Exit:
             throw new NotImplementedException();
-    } 
+    }
+}
+
+List<Todo> AskForChoiceOfTodos(string action)
+{
+    return AnsiConsole.Prompt(
+        new MultiSelectionPrompt<Todo>()
+            .Title($"Select the todos that you want to {action}")
+            .PageSize(10)
+            .MoreChoicesText("[grey](Move up and down to reveal more todos)[/]")
+            .InstructionsText(
+                "[grey](Press [blue]<space>[/] to toggle a todo, " +
+                "[green]<enter>[/] to accept)[/]")
+            .UseConverter(todo =>
+            {
+                var done = todo.Done ? "X" : "-";
+                //string.Format("|{0,5}|{1,5}|{2,5}|{3,5}|", todo.Id, done, todo.Description, todo.CreatedAt);
+                return $"{todo.Id} {done} {todo.Description} {todo.CreatedAt}";
+            })
+            .AddChoices(todoList.ToArray()));
+}
+
+void AskForTodosToBeRemoved()
+{
+    var todosToRemove = AskForChoiceOfTodos("remove");
+
+    foreach (var todoToRemove in todosToRemove)
+    {
+        todoList.RemoveAll(todo => todo.Id == todoToRemove.Id);
+
+        var todosToUpdateIndex = todoList.Where(m => m.Id > todoToRemove.Id).ToList();
+
+        foreach (var todo in todosToUpdateIndex)
+        {
+            todo.TableIndex--;
+        }
+
+        todoTable.RemoveRow(todoToRemove.TableIndex);
+    }
+
+    ListTable();
 }
 
 void AskForNewTodo()
@@ -70,12 +116,21 @@ void AskForNewTodo()
 void ListTable()
 {
     AnsiConsole.Clear();
-    AnsiConsole.Write(table);
+    AnsiConsole.Write(todoTable);
 }
 
 void AddNewTodoInTable(string description)
 {
-    table?.AddRow(new Markup($"{id}"), new Markup($""), new Markup($"[blue]{description}[/]"), new Markup($"[blue]{DateTime.Now.ToString("MM/dd/yyyy")}[/]"));
+    var todo = new Todo(id, description, todoTable.Rows.Count);
+
+    todoList.Add(todo);
+
+    todoTable?.AddRow(
+        new Markup($"{todo.Id}"),
+        new Markup($"-"),
+        new Markup($"[blue]{description}[/]"),
+        new Markup($"[blue]{todo.CreatedAt}[/]"));
+
     id++;
 }
 
@@ -86,4 +141,22 @@ enum TodoOptions
     Add = 2,
     Remove = 3,
     Update = 4
+}
+
+class Todo
+{
+    public Todo(int id, string description, int tableIndex)
+    {
+        Id = id;
+        Done = false;
+        Description = description;
+        CreatedAt = DateTime.Now.ToString("MM/dd/yyyy");
+        TableIndex = tableIndex;
+    }
+
+    public int Id { get; set; }
+    public bool Done { get; set; }
+    public string Description { get; set; } = "";
+    public string CreatedAt { get; set; } = "";
+    public int TableIndex { get; set; }
 }
