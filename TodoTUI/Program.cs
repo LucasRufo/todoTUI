@@ -79,9 +79,10 @@ List<Todo> AskForChoiceOfTodos(string action)
                 "[green]<enter>[/] to accept)[/]")
             .UseConverter(todo =>
             {
+                var maxLength = todoList.Max(m => m.Description.Length);
                 var done = todo.Done ? "X" : "-";
-                //string.Format("|{0,5}|{1,5}|{2,5}|{3,5}|", todo.Id, done, todo.Description, todo.CreatedAt);
-                return $"{todo.Id} {done} {todo.Description} {todo.CreatedAt}";
+                var message = string.Format("{0,-2} | {1,1} | {2,-" + maxLength + "} | {3}", todo.Id, done, todo.Description, todo.CreatedAt);
+                return message;
             })
             .AddChoices(todoList.ToArray()));
 }
@@ -95,9 +96,10 @@ Todo AskForChoiceOfTodo(string action)
             .MoreChoicesText("[grey](Move up and down to reveal more todos)[/]")
             .UseConverter(todo =>
             {
+                var maxLength = todoList.Max(m => m.Description.Length);
                 var done = todo.Done ? "X" : "-";
-                //string.Format("|{0,5}|{1,5}|{2,5}|{3,5}|", todo.Id, done, todo.Description, todo.CreatedAt);
-                return $"{todo.Id} {done} {todo.Description} {todo.CreatedAt}";
+                var message = string.Format("{0,-2} | {1,1} | {2,-" + maxLength + "} | {3}", todo.Id, done, todo.Description, todo.CreatedAt);
+                return message;
             })
             .AddChoices(todoList.ToArray()));
 }
