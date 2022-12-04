@@ -61,7 +61,8 @@ while (true)
         case TodoOptions.Update:
             throw new NotImplementedException();
         case TodoOptions.Exit:
-            throw new NotImplementedException();
+            Environment.Exit(0);
+            break;
     }
 }
 
