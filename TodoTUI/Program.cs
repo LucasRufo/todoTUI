@@ -4,53 +4,18 @@ using TodoTUI;
 AnsiConsole.Markup("[underline red]Hello from Todo TUI. A terminal UI to keep your to do list![/]");
 AnsiConsole.WriteLine();
 
-var id = 1;
-var todoList = new List<Todo>();
-var todoTable = new Table();
+var tableHandler = new TodoTableHandler();
 
-todoTable.AddColumn("Id");
-todoTable.AddColumn("Done");
-todoTable.AddColumn("Name");
-todoTable.AddColumn("Created At");
-
-AddNewTodoInTable("teste");
-AddNewTodoInTable("teste2");
-AddNewTodoInTable("teste3");
-AddNewTodoInTable("teste4");
-
-ListTable();
+tableHandler.ListTable();
 
 while (true)
 {
-    var choice = AnsiConsole.Prompt(
-        new SelectionPrompt<TodoOptions>()
-            .Title("What do you want to do?")
-            .PageSize(10)
-            .UseConverter(x =>
-            {
-                return x switch
-                {
-                    TodoOptions.Exit => "Exit.",
-                    TodoOptions.List => "List all my Todos.",
-                    TodoOptions.Add => "Add new Todo to my list.",
-                    TodoOptions.Remove => "Remove a Todo from my list.",
-                    TodoOptions.Update => "Update a Todo from my list.",
-                    _ => throw new InvalidOperationException(),
-                };
-            })
-            .AddChoices(new[]
-            {
-                TodoOptions.List,
-                TodoOptions.Add,
-                TodoOptions.Remove,
-                TodoOptions.Update,
-                TodoOptions.Exit
-            }));
+    TodoOptions choice = AskForAction();
 
     switch (choice)
     {
         case TodoOptions.List:
-            ListTable();
+            tableHandler.ListTable();
             break;
         case TodoOptions.Add:
             AskForNewTodo();
@@ -67,7 +32,62 @@ while (true)
     }
 }
 
-List<Todo> AskForChoiceOfTodos(string action)
+static TodoOptions AskForAction()
+{
+    return AnsiConsole.Prompt(
+        new SelectionPrompt<TodoOptions>()
+            .Title("What do you want to do?")
+            .PageSize(10)
+            .UseConverter(todoOption =>
+            {
+                return todoOption switch
+                {
+                    TodoOptions.Add => "Add new Todo to my list.",
+                    TodoOptions.Update => "Update a Todo from my list.",
+                    TodoOptions.Remove => "Remove a Todo from my list.",
+                    TodoOptions.Exit => "Exit.",
+                    _ => throw new InvalidOperationException(),
+                };
+            })
+            .AddChoices(new[]
+            {
+                TodoOptions.Add,
+                TodoOptions.Update,
+                TodoOptions.Remove,
+                TodoOptions.Exit
+            }));
+}
+
+void AskForNewTodo()
+{
+    var description = AnsiConsole.Ask<string>("What's your next [green]task[/]?");
+
+    tableHandler.AddNewTodoInTable(description);
+
+    tableHandler.ListTable();
+}
+
+void AskForTodoToBeUpdated()
+{
+    var todoToUpdate = AskForSingleTodoToAction("update");
+
+    var newDescription = AnsiConsole.Ask<string>("What's the new description for this todo?");
+
+    tableHandler.UpdateTodo(newDescription, todoToUpdate);
+
+    tableHandler.ListTable();
+}
+
+void AskForTodosToBeRemoved()
+{
+    var todosToRemove = AskForTodosToAction("remove");
+
+    tableHandler.RemoveTodo(todosToRemove);
+
+    tableHandler.ListTable();
+}
+
+List<Todo> AskForTodosToAction(string action)
 {
     return AnsiConsole.Prompt(
         new MultiSelectionPrompt<Todo>()
@@ -77,95 +97,26 @@ List<Todo> AskForChoiceOfTodos(string action)
             .InstructionsText(
                 "[grey](Press [blue]<space>[/] to toggle a todo, " +
                 "[green]<enter>[/] to accept)[/]")
-            .UseConverter(todo =>
-            {
-                var maxLength = todoList.Max(m => m.Description.Length);
-                var done = todo.Done ? "X" : "-";
-                var message = string.Format("{0,-2} | {1,1} | {2,-" + maxLength + "} | {3}", todo.Id, done, todo.Description, todo.CreatedAt);
-                return message;
-            })
-            .AddChoices(todoList.ToArray()));
+            .UseConverter(ChoiceConverter)
+            .AddChoices(tableHandler!.GetTodoList().ToArray()));
 }
 
-Todo AskForChoiceOfTodo(string action)
+Todo AskForSingleTodoToAction(string action)
 {
     return AnsiConsole.Prompt(
         new SelectionPrompt<Todo>()
             .Title($"Select the todo that you want to {action}")
             .PageSize(10)
             .MoreChoicesText("[grey](Move up and down to reveal more todos)[/]")
-            .UseConverter(todo =>
-            {
-                var maxLength = todoList.Max(m => m.Description.Length);
-                var done = todo.Done ? "X" : "-";
-                var message = string.Format("{0,-2} | {1,1} | {2,-" + maxLength + "} | {3}", todo.Id, done, todo.Description, todo.CreatedAt);
-                return message;
-            })
-            .AddChoices(todoList.ToArray()));
+            .UseConverter(ChoiceConverter)
+            .AddChoices(tableHandler!.GetTodoList().ToArray()));
 }
 
-void AskForTodosToBeRemoved()
+string ChoiceConverter(Todo todo)
 {
-    var todosToRemove = AskForChoiceOfTodos("remove");
-
-    foreach (var todoToRemove in todosToRemove)
-    {
-        todoList.RemoveAll(todo => todo.Id == todoToRemove.Id);
-
-        var todosToUpdateIndex = todoList.Where(m => m.Id > todoToRemove.Id).ToList();
-
-        foreach (var todo in todosToUpdateIndex)
-        {
-            todo.TableIndex--;
-        }
-
-        todoTable.RemoveRow(todoToRemove.TableIndex);
-    }
-
-    ListTable();
+    var maxLength = tableHandler!.GetTodoList()!.Max(m => m.Description.Length);
+    var done = todo.Done ? "X" : "-";
+    var message = string.Format("{0,-2} | {1,1} | {2,-" + maxLength + "} | {3}", todo.Id, done, todo.Description, todo.CreatedAt);
+    return message;
 }
 
-void AskForTodoToBeUpdated()
-{
-    var todoToUpdate = AskForChoiceOfTodo("update");
-
-    var newDescription = AnsiConsole.Ask<string>("What's the new description for this todo?");
-
-    var todo = todoList.Where(m => m.Id == todoToUpdate.Id).First();
-
-    todo.Description = newDescription;
-
-    todoTable.UpdateCell(todo.TableIndex, 2, new Markup($"[blue]{todo.Description}[/]"));
-
-    ListTable();
-}
-
-void AskForNewTodo()
-{
-    var description = AnsiConsole.Ask<string>("What's your next [green]task[/]?");
-
-    AddNewTodoInTable(description);
-
-    ListTable();
-}
-
-void ListTable()
-{
-    AnsiConsole.Clear();
-    AnsiConsole.Write(todoTable);
-}
-
-void AddNewTodoInTable(string description)
-{
-    var todo = new Todo(id, description, todoTable.Rows.Count);
-
-    todoList.Add(todo);
-
-    todoTable?.AddRow(
-        new Markup($"{todo.Id}"),
-        new Markup($"-"),
-        new Markup($"[blue]{description}[/]"),
-        new Markup($"[blue]{todo.CreatedAt}[/]"));
-
-    id++;
-}
