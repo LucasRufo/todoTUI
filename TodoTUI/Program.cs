@@ -14,9 +14,6 @@ while (true)
 
     switch (choice)
     {
-        case TodoOptions.List:
-            tableHandler.ListTable();
-            break;
         case TodoOptions.Add:
             AskForNewTodo();
             break;
