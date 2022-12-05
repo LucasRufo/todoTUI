@@ -46,9 +46,9 @@ static TodoOptions AskForAction()
                 return todoOption switch
                 {
                     TodoOptions.Add => "Add new Todo to my list.",
+                    TodoOptions.MarkAsDone => "Mark Todos as done.",
                     TodoOptions.Update => "Update a Todo from my list.",
                     TodoOptions.Remove => "Remove Todos from my list.",
-                    TodoOptions.MarkAsDone => "Mark Todos as done.",
                     TodoOptions.Exit => "Exit.",
                     _ => throw new InvalidOperationException(),
                 };
@@ -57,9 +57,9 @@ static TodoOptions AskForAction()
             .AddChoices(new[]
             {
                 TodoOptions.Add,
+                TodoOptions.MarkAsDone,
                 TodoOptions.Update,
                 TodoOptions.Remove,
-                TodoOptions.MarkAsDone,
                 TodoOptions.Exit
             }));
 }
