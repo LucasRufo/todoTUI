@@ -13,10 +13,11 @@ public class TodoTableHandler
     {
         _todoTable = new Table();
 
-        _todoTable.AddColumn("Id");
-        _todoTable.AddColumn("Done");
-        _todoTable.AddColumn("Name");
-        _todoTable.AddColumn("Created At");
+        _todoTable.AddColumn("[lightcyan1 bold]Id[/]");
+        _todoTable.AddColumn("[lightcyan1 bold]Done[/]");
+        _todoTable.AddColumn("[lightcyan1 bold]Name[/]");
+        _todoTable.AddColumn("[lightcyan1 bold]Created At[/]");
+        _todoTable.AddColumn("[lightcyan1 bold]Completed At[/]");
 
         _todoList = new List<Todo>();
         _todoId = 1;
@@ -31,10 +32,12 @@ public class TodoTableHandler
         _todoList.Add(todo);
 
         _todoTable?.AddRow(
-            new Markup($"{todo.Id}"),
+            new Markup($"[deepskyblue1]{todo.Id}[/]"),
             new Markup($"[red]-[/]"),
-            new Markup($"[blue]{description}[/]"),
-            new Markup($"[blue]{todo.CreatedAt}[/]"));
+            new Markup($"[deepskyblue1]{description}[/]"),
+            new Markup($"[deepskyblue1]{todo.CreatedAt}[/]"),
+            new Markup($"[deepskyblue1]{todo.CompletedAt}[/]")
+            );
 
         IncrementTodoId();
     }
@@ -67,7 +70,7 @@ public class TodoTableHandler
 
         todo.Description = newDescription;
 
-        _todoTable.UpdateCell(todo.TableIndex, 2, new Markup($"[blue]{todo.Description}[/]"));
+        _todoTable.UpdateCell(todo.TableIndex, 2, new Markup($"[deepskyblue1]{todo.Description}[/]"));
     }
 
     public void MarkAsDone(List<Todo> todosToMarkAsDone)
@@ -77,8 +80,10 @@ public class TodoTableHandler
             var todoToUpdate = _todoList.Where(m => m.Id == todoToMarkAsDone.Id).First();
 
             todoToUpdate.Done = true;
+            todoToUpdate.CompletedAt = DateTime.Now.ToString("MM/dd/yyyy hh:mm tt");
 
             _todoTable.UpdateCell(todoToUpdate.TableIndex, 1, new Markup($"[green]X[/]"));
+            _todoTable.UpdateCell(todoToUpdate.TableIndex, 4, new Markup($"[deepskyblue1]{todoToUpdate.CompletedAt}[/]"));
         }
     }
 

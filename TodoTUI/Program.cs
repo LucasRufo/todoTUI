@@ -5,10 +5,11 @@ var tableHandler = new TodoTableHandler();
 
 while (true)
 {
-    AnsiConsole.Markup("[bold red]Hello from [underline]Todo TUI[/]. A terminal UI to keep your to do list![/]");
+    AnsiConsole.Markup("[bold cyan1]Hello from [underline]Todo TUI[/]. A terminal UI to keep your to do list![/]");
     AnsiConsole.WriteLine();
 
     tableHandler.ListTable();
+    AnsiConsole.WriteLine();
 
     TodoOptions choice = AskForAction();
 
@@ -72,7 +73,7 @@ void AskForNewTodo()
 
 void AskForTodoToBeUpdated()
 {
-    var todoToUpdate = AskForSingleTodoToAction("update");
+    var todoToUpdate = AskForSingleTodoToAction("[underline green]update[/]");
 
     var newDescription = AnsiConsole.Ask<string>("What's the [underline green]new description[/] for this todo?");
 
@@ -81,14 +82,14 @@ void AskForTodoToBeUpdated()
 
 void AskForTodosToBeMarkedAsDone()
 {
-    var todosToMarkAsDone = AskForTodosToAction("mark as done");
+    var todosToMarkAsDone = AskForTodosToAction("[underline green]mark as done[/]");
 
     tableHandler.MarkAsDone(todosToMarkAsDone);
 }
 
 void AskForTodosToBeRemoved()
 {
-    var todosToRemove = AskForTodosToAction("remove");
+    var todosToRemove = AskForTodosToAction("[underline red]remove[/]");
 
     tableHandler.RemoveTodo(todosToRemove);
 }
@@ -99,12 +100,13 @@ List<Todo> AskForTodosToAction(string action)
         new MultiSelectionPrompt<Todo>()
             .Title($"Select the todos that you want to {action}.")
             .PageSize(10)
-            .MoreChoicesText("[grey](Move up and down to reveal more todos)[/]")
+            .NotRequired()
+            .MoreChoicesText("[silver](Move up and down to reveal more todos)[/]")
             .InstructionsText(
-                "[grey](Press [blue]<space>[/] to toggle a todo, " +
+                "[silver](Press [blue]<space>[/] to toggle a todo, " +
                 "[green]<enter>[/] to accept)[/]")
             .UseConverter(ChoiceConverter)
-            .HighlightStyle(new Style(Color.Red))
+            .HighlightStyle(new Style(Color.DeepSkyBlue1))
             .AddChoices(tableHandler!.GetTodoList().ToArray()));
 }
 
@@ -114,9 +116,9 @@ Todo AskForSingleTodoToAction(string action)
         new SelectionPrompt<Todo>()
             .Title($"Select the todo that you want to {action}.")
             .PageSize(10)
-            .MoreChoicesText("[grey](Move up and down to reveal more todos)[/]")
+            .MoreChoicesText("[silver](Move up and down to reveal more todos)[/]")
             .UseConverter(ChoiceConverter)
-            .HighlightStyle(new Style(Color.Red))
+            .HighlightStyle(new Style(Color.DeepSkyBlue1))
             .AddChoices(tableHandler!.GetTodoList().ToArray()));
 }
 
@@ -124,7 +126,8 @@ string ChoiceConverter(Todo todo)
 {
     var maxLength = tableHandler!.GetTodoList()!.Max(m => m.Description.Length);
     var done = todo.Done ? "[green]X[/]" : "[red]-[/]";
-    var message = string.Format("{0,-2} | {1,1} | {2,-" + maxLength + "} | {3}", todo.Id, done, todo.Description, todo.CreatedAt);
+    var message = string.Format("{0,-2} | {1,1} | {2,-" + maxLength + "} | {3} | {4}", 
+        todo.Id, done, todo.Description, todo.CreatedAt, todo.CompletedAt);
     return message;
 }
 
