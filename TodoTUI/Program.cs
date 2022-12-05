@@ -71,23 +71,12 @@ void AskForNewTodo()
     tableHandler.AddNewTodoInTable(description);
 }
 
-string AskForTaskName(string prompt)
-{
-    return AnsiConsole.Prompt(
-        new TextPrompt<string>(prompt)
-            .ValidationErrorMessage("[red]That's not a valid task![/]")
-            .Validate(task =>
-            {
-                if (task.Length > 50)
-                    return ValidationResult.Error("[red]The task length need to be lower than 50 caracthers.[/]");
-
-                return ValidationResult.Success();
-            }));
-}
-
 void AskForTodoToBeUpdated()
 {
     var todoToUpdate = AskForSingleTodoToAction("[underline green]update[/]");
+
+    AnsiConsole.MarkupLine($"[deepskyblue1]{TodoConverter(todoToUpdate)}[/]");
+    AnsiConsole.WriteLine();
 
     var newDescription = AskForTaskName("What's the [underline green]new description[/] for this todo?");
 
@@ -108,6 +97,20 @@ void AskForTodosToBeRemoved()
     tableHandler.RemoveTodo(todosToRemove);
 }
 
+string AskForTaskName(string prompt)
+{
+    return AnsiConsole.Prompt(
+        new TextPrompt<string>(prompt)
+            .ValidationErrorMessage("[red]That's not a valid task![/]")
+            .Validate(task =>
+            {
+                if (task.Length > 50)
+                    return ValidationResult.Error("[red]The task length need to be lower than 50 caracthers.[/]");
+
+                return ValidationResult.Success();
+            }));
+}
+
 List<Todo> AskForTodosToAction(string action)
 {
     return AnsiConsole.Prompt(
@@ -119,7 +122,7 @@ List<Todo> AskForTodosToAction(string action)
             .InstructionsText(
                 "[silver](Press [blue]<space>[/] to toggle a todo, " +
                 "[green]<enter>[/] to accept)[/]")
-            .UseConverter(ChoiceConverter)
+            .UseConverter(TodoConverter)
             .HighlightStyle(new Style(Color.DeepSkyBlue1))
             .AddChoices(tableHandler!.GetTodoList().ToArray()));
 }
@@ -131,12 +134,12 @@ Todo AskForSingleTodoToAction(string action)
             .Title($"Select the todo that you want to {action}.")
             .PageSize(10)
             .MoreChoicesText("[silver](Move up and down to reveal more todos)[/]")
-            .UseConverter(ChoiceConverter)
+            .UseConverter(TodoConverter)
             .HighlightStyle(new Style(Color.DeepSkyBlue1))
             .AddChoices(tableHandler!.GetTodoList().ToArray()));
 }
 
-string ChoiceConverter(Todo todo)
+string TodoConverter(Todo todo)
 {
     var maxLength = tableHandler!.GetTodoList()!.Max(m => m.Description.Length);
     var done = todo.Done ? "[green]X[/]" : "[red]-[/]";
