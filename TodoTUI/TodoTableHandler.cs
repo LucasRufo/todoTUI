@@ -1,5 +1,4 @@
 ﻿using Spectre.Console;
-using System.Dynamic;
 
 namespace TodoTUI;
 
@@ -12,6 +11,8 @@ public class TodoTableHandler
     public TodoTableHandler()
     {
         _todoTable = new Table();
+
+        _todoTable.Border(TableBorder.Rounded);
 
         _todoTable.AddColumn("[lightcyan1 bold]Id[/]");
         _todoTable.AddColumn("[lightcyan1 bold]Done[/]");

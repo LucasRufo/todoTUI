@@ -75,7 +75,9 @@ void AskForTodoToBeUpdated()
 {
     var todoToUpdate = AskForSingleTodoToAction("[underline green]update[/]");
 
-    AnsiConsole.MarkupLine($"[deepskyblue1]{TodoConverter(todoToUpdate)}[/]");
+    if (todoToUpdate == null) return;
+
+    AnsiConsole.MarkupLine($"[deepskyblue1]{TodoConverter(todoToUpdate, todoToUpdate.Description.Length)}[/]");
     AnsiConsole.WriteLine();
 
     var newDescription = AskForTaskName("What's the [underline green]new description[/] for this todo?");
@@ -87,6 +89,8 @@ void AskForTodosToBeMarkedAsDone()
 {
     var todosToMarkAsDone = AskForTodosToAction("[underline green]mark as done[/]");
 
+    if (todosToMarkAsDone.Count == 0) return;
+
     tableHandler.MarkAsDone(todosToMarkAsDone);
 }
 
@@ -94,7 +98,34 @@ void AskForTodosToBeRemoved()
 {
     var todosToRemove = AskForTodosToAction("[underline red]remove[/]");
 
-    tableHandler.RemoveTodo(todosToRemove);
+    if (todosToRemove.Count == 0) return;
+
+    AnsiConsole.MarkupLine("The following todos are going to be [underline red]removed[/]?");
+    AnsiConsole.MarkupLine("This operation is irreversible.");
+    AnsiConsole.WriteLine();
+
+    string todosToRemoveMarkup = string.Empty;
+    var maxLength = todosToRemove.Max(m => m.Description.Length);
+
+    foreach (var todoToRemove in todosToRemove)
+    {
+        todosToRemoveMarkup += $"[red]{TodoConverter(todoToRemove, maxLength)}[/]\n";
+    }
+
+    todosToRemoveMarkup = todosToRemoveMarkup.TrimEnd('\n');
+
+    var panel = new Panel(todosToRemoveMarkup)
+    {
+        Border = BoxBorder.Rounded
+    };
+
+    AnsiConsole.Write(panel);
+    AnsiConsole.WriteLine();
+
+    if (AnsiConsole.Confirm("Are you sure?"))
+    {
+        tableHandler.RemoveTodo(todosToRemove);
+    }
 }
 
 string AskForTaskName(string prompt)
@@ -122,7 +153,7 @@ List<Todo> AskForTodosToAction(string action)
             .InstructionsText(
                 "[silver](Press [blue]<space>[/] to toggle a todo, " +
                 "[green]<enter>[/] to accept)[/]")
-            .UseConverter(TodoConverter)
+            .UseConverter(ChoiceConverter)
             .HighlightStyle(new Style(Color.DeepSkyBlue1))
             .AddChoices(tableHandler!.GetTodoList().ToArray()));
 }
@@ -134,17 +165,21 @@ Todo AskForSingleTodoToAction(string action)
             .Title($"Select the todo that you want to {action}.")
             .PageSize(10)
             .MoreChoicesText("[silver](Move up and down to reveal more todos)[/]")
-            .UseConverter(TodoConverter)
+            .UseConverter(ChoiceConverter)
             .HighlightStyle(new Style(Color.DeepSkyBlue1))
             .AddChoices(tableHandler!.GetTodoList().ToArray()));
 }
 
-string TodoConverter(Todo todo)
+string ChoiceConverter(Todo todo)
 {
     var maxLength = tableHandler!.GetTodoList()!.Max(m => m.Description.Length);
+    return TodoConverter(todo, maxLength);
+}
+
+string TodoConverter(Todo todo, int maxLength)
+{
     var done = todo.Done ? "[green]X[/]" : "[red]-[/]";
-    var message = string.Format("{0,-2} | {1,1} | {2,-" + maxLength + "} | {3} | {4}", 
+    var message = string.Format("{0,-2} | {1,1} | {2,-" + maxLength + "} | {3} | {4}",
         todo.Id, done, todo.Description, todo.CreatedAt, todo.CompletedAt);
     return message;
 }
-
