@@ -35,9 +35,11 @@ while (true)
     AnsiConsole.Clear();
 }
 
-static TodoOptions AskForAction()
+TodoOptions AskForAction()
 {
-    return AnsiConsole.Prompt(
+    TodoOptions[] todoChoices = GetTodoChoices();
+
+    var selectionPrompt = 
         new SelectionPrompt<TodoOptions>()
             .Title("What do you want to do?")
             .PageSize(10)
@@ -54,14 +56,32 @@ static TodoOptions AskForAction()
                 };
             })
             .HighlightStyle(new Style(Color.Green))
-            .AddChoices(new[]
-            {
-                TodoOptions.Add,
-                TodoOptions.MarkAsDone,
-                TodoOptions.Update,
-                TodoOptions.Remove,
-                TodoOptions.Exit
-            }));
+            .AddChoices(todoChoices);
+
+    return AnsiConsole.Prompt(selectionPrompt);
+}
+
+TodoOptions[] GetTodoChoices()
+{
+    if (tableHandler.GetTodoList().Count == 0)
+    {
+        return new TodoOptions[]
+        {
+            TodoOptions.Add,
+            TodoOptions.Exit
+        };
+    }
+    else
+    {
+        return new TodoOptions[]
+        {
+            TodoOptions.Add,
+            TodoOptions.MarkAsDone,
+            TodoOptions.Update,
+            TodoOptions.Remove,
+            TodoOptions.Exit
+        };
+    }
 }
 
 void AskForNewTodo()
