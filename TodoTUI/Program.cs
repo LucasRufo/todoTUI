@@ -66,16 +66,30 @@ static TodoOptions AskForAction()
 
 void AskForNewTodo()
 {
-    var description = AnsiConsole.Ask<string>("What's your next [underline green]task[/]?");
+    var description = AskForTaskName("What's your next [underline green]task[/]?");
 
     tableHandler.AddNewTodoInTable(description);
+}
+
+string AskForTaskName(string prompt)
+{
+    return AnsiConsole.Prompt(
+        new TextPrompt<string>(prompt)
+            .ValidationErrorMessage("[red]That's not a valid task![/]")
+            .Validate(task =>
+            {
+                if (task.Length > 50)
+                    return ValidationResult.Error("[red]The task length need to be lower than 50 caracthers.[/]");
+
+                return ValidationResult.Success();
+            }));
 }
 
 void AskForTodoToBeUpdated()
 {
     var todoToUpdate = AskForSingleTodoToAction("[underline green]update[/]");
 
-    var newDescription = AnsiConsole.Ask<string>("What's the [underline green]new description[/] for this todo?");
+    var newDescription = AskForTaskName("What's the [underline green]new description[/] for this todo?");
 
     tableHandler.UpdateTodo(newDescription, todoToUpdate);
 }
